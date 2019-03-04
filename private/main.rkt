@@ -27,9 +27,17 @@
 
 (define (walk stx)
   (define ret
-    (kernel-syntax-case stx #f
+    (syntax-case* stx
+      (#%expression module module* begin begin0 begin-for-syntax
+                    define-values define-syntaxes
+                    #%plain-lambda case-lambda
+                    if let-values letrec-values set!
+                    with-continuation-mark #%plain-app)
+      (λ (a b) (free-identifier=? a b #f #f))
       [(#%expression ?expr) (walk #'?expr)]
       [(module _ _ (#%plain-module-begin ?module-level-form ...))
+       (walk* #'(?module-level-form ...))]
+      [(module* _ _ (#%plain-module-begin ?module-level-form ...))
        (walk* #'(?module-level-form ...))]
       [(begin ?expr ...)
        (walk* #'(?expr ...))]
